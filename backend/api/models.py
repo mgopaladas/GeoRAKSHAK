@@ -8,7 +8,8 @@ from sqlalchemy import (
 )
 import uuid
 import os
-from datetime import datetime
+from datetime import datetime, timezone
+from typing import Any
 from sqlalchemy.orm import relationship
 
 from api.database import Base
@@ -16,8 +17,8 @@ from api.database import Base
 IS_SQLITE = os.environ.get("DATABASE_URL", "sqlite:///./georakshak.db").startswith("sqlite")
 
 if IS_SQLITE:
-    UUID_TYPE = String(36)
-    JSONB_TYPE = JSON
+    UUID_TYPE: Any = String(36)
+    JSONB_TYPE: Any = JSON
     def ARRAY_TYPE(*args, **kwargs): return JSON
     def Geometry_TYPE(*args, **kwargs): return Text
     BigInteger = Integer  # SQLite requires Integer for AUTOINCREMENT
@@ -45,8 +46,8 @@ class User(Base):
     state = Column(String(100))
     district = Column(String(100))
     is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
-    updated_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 # ─── GEOGRAPHY ────────────────────────────────────────────────
@@ -154,7 +155,7 @@ class SensorHealth(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     station_id = Column(String(50), ForeignKey("sensor_stations.id"))
-    timestamp = Column(DateTime(timezone=True), default=datetime.utcnow)
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     rain_gauge_ok = Column(Boolean, default=True)
     soil_sensor_ok = Column(Boolean, default=True)
     imu_ok = Column(Boolean, default=True)
@@ -187,7 +188,7 @@ class RiskAssessment(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     zone_id = Column(Integer, ForeignKey("risk_zones.id"))
-    timestamp = Column(DateTime(timezone=True), default=datetime.utcnow)
+    timestamp = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     risk_score = Column(Float, nullable=False)
     risk_level = Column(String(20), nullable=False)
     confidence = Column(Float)
@@ -237,7 +238,7 @@ class Alert(Base):
     description = Column(Text)
     status = Column(String(20), default="ACTIVE")
     escalation_level = Column(Integer, default=1)
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     acknowledged_at = Column(DateTime(timezone=True))
     resolved_at = Column(DateTime(timezone=True))
     metadata_ = Column("metadata", JSONB_TYPE, default={})
@@ -259,7 +260,7 @@ class FieldReport(Base):
     status = Column(String(50), default="SUBMITTED")
     verified = Column(Boolean, default=False)
     zone_id = Column(Integer, ForeignKey("risk_zones.id"))
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     synced_at = Column(DateTime(timezone=True))
     geom = Column(Geometry_TYPE("POINT", srid=4326))
 
@@ -280,6 +281,6 @@ class EmergencyTask(Base):
     affected_population = Column(Integer)
     affected_roads = Column(ARRAY_TYPE(Text))
     affected_infrastructure = Column(ARRAY_TYPE(Text))
-    created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     acknowledged_at = Column(DateTime(timezone=True))
     completed_at = Column(DateTime(timezone=True))

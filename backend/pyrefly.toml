@@ -1,0 +1,5 @@
+[tool.pyrefly]
+project_root = "."
+python_version = "3.14"
+search_path = ["."]
+site_package_path = ["C:\\Users\\madha\\AppData\\Local\\Python\\pythoncore-3.14-64\\Lib\\site-packages"]
