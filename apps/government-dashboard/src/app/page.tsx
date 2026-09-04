@@ -82,7 +82,7 @@ export default function Dashboard() {
           tilt_magnitude: Number(manualTelemetry.tilt_magnitude)
         }
       };
-      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/v1/telemetry`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://georakshak-backend.onrender.com'}/v1/telemetry`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-API-Key': 'sk_test_123' },
         body: JSON.stringify(payload)
