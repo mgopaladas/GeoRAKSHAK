@@ -18,6 +18,11 @@ engine = create_engine(settings.database_url, pool_pre_ping=True, **engine_kwarg
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
+# Auto-create tables for SQLite environments (Render deployment fix)
+if settings.database_url.startswith("sqlite"):
+    import api.models  # Ensure models are loaded
+    Base.metadata.create_all(bind=engine)
+
 
 def get_db():
     """FastAPI dependency — yields a DB session."""
