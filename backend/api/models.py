@@ -6,13 +6,25 @@ from sqlalchemy import (
     Column, String, Integer, BigInteger, Float, Boolean, DateTime, Text,
     ForeignKey, Enum as SAEnum, JSON, ARRAY
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from geoalchemy2 import Geometry
-from sqlalchemy.orm import relationship
-from datetime import datetime
 import uuid
+import os
 
 from api.database import Base
+
+IS_SQLITE = os.environ.get("DATABASE_URL", "sqlite:///./georakshak.db").startswith("sqlite")
+
+if IS_SQLITE:
+    UUID_TYPE = String(36)
+    JSONB_TYPE = JSON
+    def ARRAY_TYPE(*args, **kwargs): return JSON
+    def Geometry_TYPE(*args, **kwargs): return Text
+else:
+    from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB_TYPE as PG_JSONB, ARRAY as PG_ARRAY
+    from geoalchemy2 import Geometry as GEO_Geometry
+    UUID_TYPE = PG_UUID_TYPE
+    JSONB_TYPE = PG_JSONB
+    ARRAY_TYPE = PG_ARRAY
+    Geometry_TYPE = GEO_Geometry
 
 
 # ─── USERS ────────────────────────────────────────────────────
@@ -20,7 +32,7 @@ from api.database import Base
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
@@ -42,7 +54,7 @@ class State(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     code = Column(String(10), unique=True, nullable=False)
-    geom = Column(Geometry("MULTIPOLYGON", srid=4326))
+    geom = Column(Geometry_TYPE("MULTIPOLYGON", srid=4326))
     districts = relationship("District", back_populates="state")
 
 
@@ -53,7 +65,7 @@ class District(Base):
     state_id = Column(Integer, ForeignKey("states.id"))
     name = Column(String(100), nullable=False)
     code = Column(String(20))
-    geom = Column(Geometry("MULTIPOLYGON", srid=4326))
+    geom = Column(Geometry_TYPE("MULTIPOLYGON", srid=4326))
     state = relationship("State", back_populates="districts")
 
 
@@ -66,7 +78,7 @@ class Village(Base):
     population = Column(Integer)
     latitude = Column(Float)
     longitude = Column(Float)
-    geom = Column(Geometry("POINT", srid=4326))
+    geom = Column(Geometry_TYPE("POINT", srid=4326))
 
 
 class Road(Base):
@@ -76,7 +88,7 @@ class Road(Base):
     name = Column(String(255))
     road_type = Column(String(50))
     importance = Column(Integer, default=1)
-    geom = Column(Geometry("LINESTRING", srid=4326))
+    geom = Column(Geometry_TYPE("LINESTRING", srid=4326))
 
 
 class Infrastructure(Base):
@@ -88,7 +100,7 @@ class Infrastructure(Base):
     district_id = Column(Integer, ForeignKey("districts.id"))
     latitude = Column(Float)
     longitude = Column(Float)
-    geom = Column(Geometry("POINT", srid=4326))
+    geom = Column(Geometry_TYPE("POINT", srid=4326))
 
 
 # ─── SENSORS ─────────────────────────────────────────────────
@@ -108,8 +120,8 @@ class SensorStation(Base):
     firmware_version = Column(String(50))
     installed_at = Column(DateTime(timezone=True))
     last_seen_at = Column(DateTime(timezone=True))
-    geom = Column(Geometry("POINT", srid=4326))
-    metadata_ = Column("metadata", JSONB, default={})
+    geom = Column(Geometry_TYPE("POINT", srid=4326))
+    metadata_ = Column("metadata", JSONB_TYPE, default={})
     readings = relationship("SensorReading", back_populates="station")
 
 
@@ -130,7 +142,7 @@ class SensorReading(Base):
     battery = Column(Float)
     signal_strength = Column(Integer)
     is_anomaly = Column(Boolean, default=False)
-    raw_data = Column(JSONB)
+    raw_data = Column(JSONB_TYPE)
     station = relationship("SensorStation", back_populates="readings")
 
 
@@ -146,7 +158,7 @@ class SensorHealth(Base):
     gps_ok = Column(Boolean, default=True)
     battery_ok = Column(Boolean, default=True)
     network_ok = Column(Boolean, default=True)
-    details = Column(JSONB)
+    details = Column(JSONB_TYPE)
 
 
 # ─── RISK ─────────────────────────────────────────────────────
@@ -162,8 +174,8 @@ class RiskZone(Base):
     current_risk_level = Column(String(20), default="LOW")
     current_risk_score = Column(Float, default=0)
     last_assessed_at = Column(DateTime(timezone=True))
-    geom = Column(Geometry("POLYGON", srid=4326))
-    properties = Column(JSONB, default={})
+    geom = Column(Geometry_TYPE("POLYGON", srid=4326))
+    properties = Column(JSONB_TYPE, default={})
     assessments = relationship("RiskAssessment", back_populates="zone")
 
 
@@ -176,7 +188,7 @@ class RiskAssessment(Base):
     risk_score = Column(Float, nullable=False)
     risk_level = Column(String(20), nullable=False)
     confidence = Column(Float)
-    factors = Column(JSONB, nullable=False)
+    factors = Column(JSONB_TYPE, nullable=False)
     terrain_score = Column(Float)
     rainfall_score = Column(Float)
     soil_score = Column(Float)
@@ -206,7 +218,7 @@ class LandslideEvent(Base):
     trigger = Column(String(100))
     source = Column(String(255))
     description = Column(Text)
-    geom = Column(Geometry("POINT", srid=4326))
+    geom = Column(Geometry_TYPE("POINT", srid=4326))
 
 
 # ─── ALERTS ───────────────────────────────────────────────────
@@ -225,7 +237,7 @@ class Alert(Base):
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     acknowledged_at = Column(DateTime(timezone=True))
     resolved_at = Column(DateTime(timezone=True))
-    metadata_ = Column("metadata", JSONB, default={})
+    metadata_ = Column("metadata", JSONB_TYPE, default={})
 
 
 # ─── FIELD REPORTS ────────────────────────────────────────────
@@ -233,20 +245,20 @@ class Alert(Base):
 class FieldReport(Base):
     __tablename__ = "field_reports"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    reporter_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    id = Column(UUID_TYPE, primary_key=True, default=uuid.uuid4)
+    reporter_id = Column(UUID_TYPE, ForeignKey("users.id"))
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     category = Column(String(50), nullable=False)
     description = Column(Text)
     severity = Column(String(50))
-    media_urls = Column(ARRAY(Text))
+    media_urls = Column(ARRAY_TYPE(Text))
     status = Column(String(50), default="SUBMITTED")
     verified = Column(Boolean, default=False)
     zone_id = Column(Integer, ForeignKey("risk_zones.id"))
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     synced_at = Column(DateTime(timezone=True))
-    geom = Column(Geometry("POINT", srid=4326))
+    geom = Column(Geometry_TYPE("POINT", srid=4326))
 
 
 # ─── EMERGENCY ────────────────────────────────────────────────
@@ -260,11 +272,11 @@ class EmergencyTask(Base):
     title = Column(String(500), nullable=False)
     description = Column(Text)
     priority = Column(Integer, nullable=False)
-    assigned_to = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    assigned_to = Column(UUID_TYPE, ForeignKey("users.id"))
     status = Column(String(50), default="PENDING")
     affected_population = Column(Integer)
-    affected_roads = Column(ARRAY(Text))
-    affected_infrastructure = Column(ARRAY(Text))
+    affected_roads = Column(ARRAY_TYPE(Text))
+    affected_infrastructure = Column(ARRAY_TYPE(Text))
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     acknowledged_at = Column(DateTime(timezone=True))
     completed_at = Column(DateTime(timezone=True))
