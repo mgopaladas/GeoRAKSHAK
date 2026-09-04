@@ -221,6 +221,71 @@ def ingest_sensor_reading(payload: SensorReadingIn, db: Session = Depends(get_db
 
     return {"status": "ok", "reading_id": reading.id}
 
+from pydantic import BaseModel
+class TelemetryMeasurements(BaseModel):
+    rainfall_1h: float
+    rainfall_24h: float
+    soil_moisture: float
+    tilt_magnitude: float
+
+class TelemetryPayload(BaseModel):
+    station_id: str
+    measurements: TelemetryMeasurements
+
+@app.post("/v1/telemetry")
+async def live_telemetry_webhook(payload: TelemetryPayload, db: Session = Depends(get_db)):
+    """Hardware API Webhook for live metrics ingestion and ML Edge-Trigger Evaluation."""
+    import asyncio, json
+    from iot.websocket_manager import manager
+    from risk.engine import calculate_risk
+    
+    # 1. Simulate finding the station & zone
+    station = db.query(SensorStation).filter(SensorStation.id == payload.station_id).first()
+    if not station:
+        station = db.query(SensorStation).first() # Fallback
+
+    zone = db.query(RiskZone).filter(RiskZone.district_id == station.district_id).first() if station else None
+    if not zone:
+        zone = db.query(RiskZone).first()
+
+    # 2. Run through ML Engine
+    risk_result = calculate_risk(
+        susceptibility=zone.susceptibility_score if zone else 0.5,
+        rainfall_1h=payload.measurements.rainfall_1h,
+        rainfall_24h=payload.measurements.rainfall_24h,
+        soil_moisture=payload.measurements.soil_moisture,
+        tilt_x=payload.measurements.tilt_magnitude,
+        tilt_y=0
+    )
+
+    # 3. Broadcast to all connected dashboards
+    packet = {
+        "type": "TELEMETRY",
+        "batch": [{
+            "station_id": payload.station_id,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "measurements": payload.measurements.model_dump(),
+            "prediction": {
+                "risk_level": risk_result["risk_level"],
+                "confidence": risk_result["confidence"]
+            }
+        }]
+    }
+    await manager.broadcast(json.dumps(packet))
+    
+    # If ML triggered danger, broadcast emergency alert
+    if risk_result["risk_level"] in ["CRITICAL", "HIGH", "EARLY WARNING (48HR)"]:
+        alert_packet = {
+            "type": "ALERT",
+            "station_id": payload.station_id,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "severity": risk_result["risk_level"],
+            "message": f"ML Edge Trigger — Priority: {risk_result['risk_level']}. Live telemetry anomalies detected.",
+            "prediction": {"risk_level": risk_result["risk_level"], "confidence": risk_result["confidence"]}
+        }
+        await manager.broadcast(json.dumps(alert_packet))
+        
+    return {"status": "accepted", "risk_level": risk_result["risk_level"]}
 
 # ─── RISK ZONES ───────────────────────────────────────────────
 

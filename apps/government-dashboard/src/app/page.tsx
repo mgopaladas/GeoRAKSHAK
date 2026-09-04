@@ -55,6 +55,37 @@ export default function Dashboard() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
+  // Manual Telemetry Override State
+  const [manualTelemetry, setManualTelemetry] = useState({
+    station_id: 'DEMO-NODE-01',
+    rainfall_1h: 0,
+    rainfall_24h: 0,
+    soil_moisture: 0,
+    tilt_magnitude: 0
+  });
+
+  const sendManualTelemetry = async () => {
+    try {
+      const payload = {
+        station_id: manualTelemetry.station_id,
+        measurements: {
+          rainfall_1h: Number(manualTelemetry.rainfall_1h),
+          rainfall_24h: Number(manualTelemetry.rainfall_24h),
+          soil_moisture: Number(manualTelemetry.soil_moisture),
+          tilt_magnitude: Number(manualTelemetry.tilt_magnitude)
+        }
+      };
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/v1/telemetry`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-API-Key': 'sk_test_123' },
+        body: JSON.stringify(payload)
+      });
+      console.log(`Manual payload for ${manualTelemetry.station_id} injected into Edge ML Pipeline successfully.`);
+    } catch (err) {
+      console.error("Error sending manual telemetry", err);
+    }
+  };
+
   // Phase 10: Live WebSocket streaming
   const { telemetryStream, activeAlerts: liveAlerts, nodeStates, latestReadings } = useTelemetry();
 
@@ -731,6 +762,40 @@ export default function Dashboard() {
                     </div>
                   </div>
                 )}
+
+                <div className="mt-8 border-t border-[var(--border-subtle)] pt-6">
+                  <h3 className="text-md font-semibold mb-2 text-blue-400" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                    Manual Node Edge-Trigger (Direct IoT Mock)
+                  </h3>
+                  <p className="text-xs text-gray-400 mb-4">Craft a custom packet to explicitly trigger the exact ML classification engine parameters and prove real-time pipeline latency.</p>
+
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Station ID</label>
+                      <input type="text" value={manualTelemetry.station_id} onChange={e => setManualTelemetry({ ...manualTelemetry, station_id: e.target.value })} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Rain (1H)</label>
+                      <input type="number" value={manualTelemetry.rainfall_1h} onChange={e => setManualTelemetry({ ...manualTelemetry, rainfall_1h: Number(e.target.value) })} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Rain (24H)</label>
+                      <input type="number" value={manualTelemetry.rainfall_24h} onChange={e => setManualTelemetry({ ...manualTelemetry, rainfall_24h: Number(e.target.value) })} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Soil Moist %</label>
+                      <input type="number" value={manualTelemetry.soil_moisture} onChange={e => setManualTelemetry({ ...manualTelemetry, soil_moisture: Number(e.target.value) })} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 uppercase tracking-wider mb-1">Tilt (Deg)</label>
+                      <input type="number" value={manualTelemetry.tilt_magnitude} onChange={e => setManualTelemetry({ ...manualTelemetry, tilt_magnitude: Number(e.target.value) })} className="w-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] rounded px-2 py-1.5 text-sm" />
+                    </div>
+                  </div>
+
+                  <button onClick={sendManualTelemetry} className="w-full bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 border border-blue-500/50 transition-colors py-2 rounded font-bold text-sm">
+                    🚀 Dispatch IoT Packet
+                  </button>
+                </div>
               </div>
             </div>
           )}
