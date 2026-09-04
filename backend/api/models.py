@@ -20,6 +20,7 @@ if IS_SQLITE:
     JSONB_TYPE = JSON
     def ARRAY_TYPE(*args, **kwargs): return JSON
     def Geometry_TYPE(*args, **kwargs): return Text
+    BigInteger = Integer  # SQLite requires Integer for AUTOINCREMENT
 else:
     from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB as PG_JSONB, ARRAY as PG_ARRAY
     from geoalchemy2 import Geometry as GEO_Geometry
