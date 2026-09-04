@@ -8,6 +8,8 @@ from sqlalchemy import (
 )
 import uuid
 import os
+from datetime import datetime
+from sqlalchemy.orm import relationship
 
 from api.database import Base
 
@@ -19,9 +21,9 @@ if IS_SQLITE:
     def ARRAY_TYPE(*args, **kwargs): return JSON
     def Geometry_TYPE(*args, **kwargs): return Text
 else:
-    from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB_TYPE as PG_JSONB, ARRAY as PG_ARRAY
+    from sqlalchemy.dialects.postgresql import UUID as PG_UUID, JSONB as PG_JSONB, ARRAY as PG_ARRAY
     from geoalchemy2 import Geometry as GEO_Geometry
-    UUID_TYPE = PG_UUID_TYPE
+    UUID_TYPE = PG_UUID(as_uuid=True)
     JSONB_TYPE = PG_JSONB
     ARRAY_TYPE = PG_ARRAY
     Geometry_TYPE = GEO_Geometry
