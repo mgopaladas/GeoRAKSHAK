@@ -20,7 +20,7 @@ export interface TelemetryPacket {
     message?: string;
 }
 
-export function useTelemetry(socketUrl: string = 'ws://127.0.0.1:8000/ws/telemetry') {
+export function useTelemetry(socketUrl?: string) {
     const [telemetryStream, setTelemetryStream] = useState<TelemetryPacket[]>([]);
     const [activeAlerts, setActiveAlerts] = useState<TelemetryPacket[]>([]);
     // Track the current real-time AI computed state of each individual sensor
@@ -34,8 +34,12 @@ export function useTelemetry(socketUrl: string = 'ws://127.0.0.1:8000/ws/telemet
         if (typeof window === 'undefined') return;
 
         const connectWebSocket = () => {
-            console.log('Connecting to GeoRakshak Telemetry Stream...');
-            wsRef.current = new WebSocket(socketUrl);
+            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://georakshak-backend.onrender.com';
+            const defaultWsUrl = baseUrl.replace(/^http/, 'ws') + '/ws/telemetry';
+            const finalSocketUrl = socketUrl || defaultWsUrl;
+
+            console.log(`Connecting to GeoRakshak Telemetry Stream at: ${finalSocketUrl}`);
+            wsRef.current = new WebSocket(finalSocketUrl);
 
             wsRef.current.onmessage = (event) => {
                 try {

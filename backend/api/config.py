@@ -8,7 +8,7 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     # Database
-    database_url: str = "postgresql://georakshak:georakshak@localhost:5432/georakshak"
+    database_url: str = os.environ.get("DATABASE_URL", "sqlite:///./georakshak.db")
 
     # Redis
     redis_url: str = "redis://localhost:6379"
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     # API
     api_host: str = "0.0.0.0"
     api_port: int = 8000
-    cors_origins: str = "http://localhost:3000"
+    cors_origins: str = "*"
 
     # Security
     secret_key: str = "dev-secret-key-change-in-production"
