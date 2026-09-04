@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import {
   Shield, Activity, AlertTriangle, Radio, MapPin, Cloud,
   Bell, Zap, BarChart3, ChevronRight, Wifi, WifiOff,
-  Thermometer, Droplets, Mountain, BatteryMedium, Clock, Brain, Cpu
+  Thermometer, Droplets, Mountain, BatteryMedium, Clock, Brain, Cpu, LogOut
 } from 'lucide-react';
 import {
   api, MOCK_STATS, MOCK_PRIORITIES, MOCK_SENSORS, MOCK_ALERTS, MOCK_RISK_ZONES,
@@ -54,6 +54,13 @@ export default function Dashboard() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+
+  // Persist authentication during showcase reload
+  useEffect(() => {
+    if (typeof window !== 'undefined' && localStorage.getItem('georakshak_auth') === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
 
   // Manual Telemetry Override State
   const [manualTelemetry, setManualTelemetry] = useState({
@@ -273,11 +280,19 @@ export default function Dashboard() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (username === 'nodal_officer' && password === 'georakshak2024') {
+      if (typeof window !== 'undefined') localStorage.setItem('georakshak_auth', 'true');
       setIsAuthenticated(true);
       setLoginError('');
     } else {
       setLoginError('Invalid credentials. Please verify your clearance level.');
     }
+  };
+
+  const handleSignOut = () => {
+    if (typeof window !== 'undefined') localStorage.removeItem('georakshak_auth');
+    setIsAuthenticated(false);
+    setUsername('');
+    setPassword('');
   };
 
   if (!isAuthenticated) {
@@ -395,6 +410,10 @@ export default function Dashboard() {
         </nav>
 
         <div className="p-4 border-t border-[var(--border-subtle)]">
+          <button onClick={handleSignOut} className="w-full flex items-center justify-center gap-2 py-2 px-3 text-red-500 border border-red-500/20 hover:bg-red-500/10 rounded-lg text-sm font-medium transition-colors mb-4">
+            <LogOut className="w-4 h-4" /> Secure Sign Out
+          </button>
+
           <div className={`flex items-center gap-2 text-xs ${apiConnected ? 'text-green-500' : 'text-yellow-500'}`}>
             {apiConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
             {apiConnected ? 'API Connected' : 'Demo Mode (Mock Data)'}
