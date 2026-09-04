@@ -1,0 +1,253 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #f0f2f5;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.8);
+  --bg-card-hover: rgba(243, 244, 246, 0.9);
+  --border-subtle: rgba(209, 213, 219, 0.8);
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --accent-blue: #2563eb;
+  --risk-critical: #dc2626;
+  --risk-high: #ea580c;
+  --risk-moderate: #d97706;
+  --risk-low: #16a34a;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.dark {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: rgba(17, 24, 39, 0.8);
+  --bg-card-hover: rgba(31, 41, 55, 0.9);
+  --border-subtle: rgba(75, 85, 99, 0.4);
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --accent-blue: #3b82f6;
+  --risk-critical: #ef4444;
+  --risk-high: #f97316;
+  --risk-moderate: #eab308;
+  --risk-low: #22c55e;
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(75, 85, 99, 0.5) transparent;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Outfit', sans-serif;
+}
+
+code,
+pre,
+.mono {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* ─── Glass Card ─────────────────────────────────── */
+.glass-card {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-subtle);
+}
+
+/* ─── Risk Badges ────────────────────────────────── */
+.risk-critical {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.risk-high {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+.risk-moderate {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.risk-low {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+/* ─── Sensor Status ──────────────────────────────── */
+.status-online {
+  color: #22c55e;
+}
+
+.status-offline {
+  color: #ef4444;
+}
+
+.status-fault {
+  color: #f97316;
+}
+
+.status-maintenance {
+  color: #eab308;
+}
+
+/* ─── Pulse Animation ────────────────────────────── */
+@keyframes pulse-risk {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.pulse-critical {
+  animation: pulse-risk 1.5s ease-in-out infinite;
+}
+
+/* ─── Leaflet Overrides ──────────────────────────── */
+.leaflet-container {
+  background: #0a0e1a !important;
+  border-radius: 12px;
+}
+
+.leaflet-popup-content-wrapper {
+  background: rgba(17, 24, 39, 0.95) !important;
+  color: #f9fafb !important;
+  border: 1px solid rgba(75, 85, 99, 0.5) !important;
+  border-radius: 8px !important;
+  backdrop-filter: blur(12px);
+}
+
+.leaflet-popup-tip {
+  background: rgba(17, 24, 39, 0.95) !important;
+}
+
+.leaflet-control-zoom a {
+  background: rgba(17, 24, 39, 0.9) !important;
+  color: #f9fafb !important;
+  border-color: rgba(75, 85, 99, 0.5) !important;
+}
+
+/* ─── Sidebar ────────────────────────────────────── */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  transition: all 0.2s ease;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sidebar-link:hover,
+.sidebar-link.active {
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent-blue);
+}
+
+/* ─── Score Bar ───────────────────────────────────── */
+.score-bar {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(75, 85, 99, 0.3);
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.8s ease;
+}
+
+/* ─── Simulator Buttons ──────────────────────────── */
+.sim-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.sim-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sim-btn-normal {
+  background: rgba(34, 197, 94, 0.15);
+  color: #22c55e;
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.sim-btn-rain {
+  background: rgba(234, 179, 8, 0.15);
+  color: #eab308;
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+.sim-btn-movement {
+  background: rgba(249, 115, 22, 0.15);
+  color: #f97316;
+  border-color: rgba(249, 115, 22, 0.3);
+}
+
+.sim-btn-critical {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* ─── Leaflet Tooltip Customizations ──────────────────────────── */
+.leaflet-tooltip-hotspot {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  padding: 8px 12px;
+  pointer-events: none;
+}
+
+.leaflet-tooltip-hotspot::before {
+  border-top-color: var(--border-subtle) !important;
+}

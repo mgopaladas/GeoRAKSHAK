@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Environment
+.env
+.env.local
+
+# Build
+.next/
+out/
+dist/
+build/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker volumes
+pgdata/
+redisdata/
+
+# Logs
+*.log
+logs/
+
+# Firmware build
+hardware/**/build/
+hardware/**/.pio/
+
+# Test coverage
+coverage/
+.coverage
+htmlcov/
+
+# Misc
+*.bak
+*.tmp

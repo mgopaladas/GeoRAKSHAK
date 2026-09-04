@@ -1,0 +1,98 @@
+version: "3.9"
+
+services:
+  # ─── PostgreSQL + PostGIS ───────────────────────────
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: georakshak-db
+    environment:
+      POSTGRES_DB: georakshak
+      POSTGRES_USER: georakshak
+      POSTGRES_PASSWORD: georakshak
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./database/migrations/001_init.sql:/docker-entrypoint-initdb.d/001_init.sql
+      - ./database/seeds/001_ner_seed.sql:/docker-entrypoint-initdb.d/002_seed.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U georakshak"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ─── Redis ──────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: georakshak-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─── MQTT Broker (Mosquitto) ────────────────────────
+  mqtt:
+    image: eclipse-mosquitto:2
+    container_name: georakshak-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./infrastructure/docker/mosquitto.conf:/mosquitto/config/mosquitto.conf
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mosquitto_sub -t '$$SYS/#' -C 1 -u '' -P '' 2>/dev/null || exit 0",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ─── FastAPI Backend ────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: georakshak-api
+    environment:
+      DATABASE_URL: postgresql://georakshak:georakshak@postgres:5432/georakshak
+      REDIS_URL: redis://redis:6379
+      MQTT_BROKER_HOST: mqtt
+      MQTT_BROKER_PORT: 1883
+      CORS_ORIGINS: http://localhost:3000
+      SECRET_KEY: dev-secret-key
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mqtt:
+        condition: service_started
+    volumes:
+      - ./backend:/app
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # ─── Sensor Simulator ──────────────────────────────
+  simulator:
+    build:
+      context: ./iot/simulator
+      dockerfile: Dockerfile
+    container_name: georakshak-simulator
+    environment:
+      MQTT_BROKER_HOST: mqtt
+      MQTT_BROKER_PORT: 1883
+      API_URL: http://backend:8000
+    depends_on:
+      - mqtt
+      - backend
+    profiles:
+      - demo
+
+volumes:
+  pg_data:
