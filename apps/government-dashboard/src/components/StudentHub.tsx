@@ -177,9 +177,13 @@ export default function StudentHub() {
                                     Grab the authoritative SIH dataset containing pre-labeled regional baseline susceptibility characteristics (rainfall constants, soil types) for local model training.
                                 </p>
                             </div>
-                            <button className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors shadow-lg shadow-purple-500/20">
+                            <a
+                                href="/data/GeoRakshak_Landslide_Data.csv"
+                                download
+                                className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold text-sm transition-colors shadow-lg shadow-purple-500/20"
+                            >
                                 <Download className="w-4 h-4" /> .CSV Dataset
-                            </button>
+                            </a>
                         </div>
                     </div>
 
