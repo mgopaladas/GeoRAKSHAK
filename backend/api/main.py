@@ -61,16 +61,12 @@ app.include_router(prediction_router)
 
 @app.on_event("startup")
 async def startup_event():
+    # 1. Initialize SQLite tables + seed mock data (runs in background thread to avoid circular imports)
     from api.database import init_sqlite_db
     import threading
-    # Run the SQLite seeder in a background thread to safely separate it from the async boot loop
     threading.Thread(target=init_sqlite_db, daemon=True).start()
     
-    # ... any other startup tasks
-
-@app.on_event("startup")
-async def startup_event():
-    # Start the continuous IoT telemetry injection background loop
+    # 2. Start the continuous IoT telemetry injection background loop
     asyncio.create_task(start_ingestion_loop())
 
 @app.websocket("/ws/telemetry")
